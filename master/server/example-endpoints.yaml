@@ -1,0 +1,7 @@
+# Endpoint names are the flattened YAML keys, e.g. "eyes.sensors".
+# Clients connect to the address as given; the process that binds
+# replaces the host with '*' (so bind on all interfaces).
+
+eyes:
+  sensors: tcp://clio:5561
+  commands: tcp://asia:5562
