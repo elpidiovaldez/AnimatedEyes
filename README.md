@@ -20,6 +20,9 @@ His introduction follows.
 >   - https://github.com/adafruit/Adafruit_Learning_System_Guides/tree/main/M4_Eyes
 >   - https://github.com/mjs513/GC9A01A_t3n
 
+The Linux port draws on the screens using [Display_Lib_RPI](https://github.com/gavinlyonsrepo/Display_Lib_RPI)
+by Gavin Lyons, used under the MIT License. Many thanks to Gavin for his display library.
+
 ### Building
 
 You need a Raspberry Pi with SPI enabled (`sudo raspi-config`, Interface Options, SPI), a C++23
