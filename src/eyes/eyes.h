@@ -56,6 +56,16 @@ struct EyeBlink {
   uint32_t durationMs{};  // Duration of blink state
   uint32_t startTimeMs{}; // Time of last state change
   float blinkFactor{};    // The most recent amount of blink [0..1] that was applied. 0 = not blinking, 1 = full blink
+
+  // How far open the eyelids are held, apart from blinks: 0 = closed, 1 = fully open.
+  // Changes smoothly from openFrom to openTo over openDurationMs.
+  float openFrom{1.0f};
+  float openTo{1.0f};
+  uint32_t openStartMs{};
+  uint32_t openDurationMs{};
+  // If reopenPending, the eyelids return to fully open at reopenAtMs
+  bool reopenPending{false};
+  uint32_t reopenAtMs{};
 };
 
 struct PupilParams {

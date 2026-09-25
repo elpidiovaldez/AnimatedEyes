@@ -2,11 +2,12 @@
 
 #include "eyes/eyes.h"
 
-// Enable the eye(s) you want to #include -- these are large graphics tables for various eyes:
-//#include "eyes/240x240/anime.h"
+// The eye styles to include -- these are large graphics tables. To leave a style out, comment out
+// its #include here and its line in eyeDefinitions below.
+#include "eyes/240x240/anime.h"
 #include "eyes/240x240/bigBlue.h"
-//#include "eyes/240x240/blueFlame1.h"
-//#include "eyes/240x240/blueFlame2.h"
+#include "eyes/240x240/blueFlame1.h"
+#include "eyes/240x240/blueFlame2.h"
 #include "eyes/240x240/brown.h"
 #include "eyes/240x240/cat.h"
 #include "eyes/240x240/demon.h"
@@ -14,50 +15,49 @@
 #include "eyes/240x240/doomRed.h"
 #include "eyes/240x240/doomSpiral.h"
 #include "eyes/240x240/dragon.h"
-//#include "eyes/240x240/firebox.h"
-//#include "eyes/240x240/fish.h"
+#include "eyes/240x240/firebox.h"
+#include "eyes/240x240/fish.h"
 #include "eyes/240x240/fizzgig.h"
-//#include "eyes/240x240/flame.h"
-//#include "eyes/240x240/hazel.h"
+#include "eyes/240x240/flame.h"
+#include "eyes/240x240/hazel.h"
 #include "eyes/240x240/hypnoRed.h"
-//#include "eyes/240x240/leopard.h"
-//#include "eyes/240x240/newt.h"
+#include "eyes/240x240/leopard.h"
+#include "eyes/240x240/newt.h"
 #include "eyes/240x240/skull.h"
 #include "eyes/240x240/snake.h"
-//#include "eyes/240x240/spikes.h"
+#include "eyes/240x240/spikes.h"
 #include "eyes/240x240/toonstripe.h"
 
 #include "eyes/EyeController.h"
 
 #include "displays/GC9A01A_Display.h"
 
-// A list of all the different eye definitions we want to use
-std::array<std::array<EyeDefinition, 2>, 13> eyeDefinitions{{
-//                                                               {anime::left, anime::right},
-                                                               {bigBlue::eye, bigBlue::eye},
-//                                                               {blueFlame1::eye, blueFlame1::eye},
-//                                                               {blueFlame2::eye, blueFlame2::eye},
-                                                               {brown::eye, brown::eye},
-                                                               {cat::eye, cat::eye},
-                                                               {demon::left, demon::right},
-                                                               {doe::left, doe::right},
-                                                               {doomRed::eye, doomRed::eye},
-                                                               {doomSpiral::left, doomSpiral::right},
-                                                               {dragon::eye, dragon::eye},
-//                                                               {firebox::eye, firebox::eye},
-//                                                               {fish::eye, fish::eye},
-                                                               {fizzgig::eye, fizzgig::eye},
-//                                                               {flame::eye, flame::eye},
-//                                                               {hazel::eye, hazel::eye},
-                                                               {hypnoRed::eye, hypnoRed::eye},
-//                                                               {leopard::left, leopard::right},
-//                                                               {newt::eye, newt::eye},
-                                                               {skull::eye, skull::eye},
-                                                               {snake::eye, snake::eye},
-//                                                                {spikes::eye, spikes::eye}
-                                                               {toonstripe::eye, toonstripe::eye},
-                                                           }
-};
+// A list of all the different eye definitions we want to use, as {left, right} pairs
+inline auto eyeDefinitions = std::to_array<std::array<EyeDefinition, 2>>({
+    {anime::left, anime::right},
+    {bigBlue::eye, bigBlue::eye},
+    {blueFlame1::eye, blueFlame1::eye},
+    {blueFlame2::eye, blueFlame2::eye},
+    {brown::eye, brown::eye},
+    {cat::eye, cat::eye},
+    {demon::left, demon::right},
+    {doe::left, doe::right},
+    {doomRed::eye, doomRed::eye},
+    {doomSpiral::left, doomSpiral::right},
+    {dragon::eye, dragon::eye},
+    {firebox::eye, firebox::eye},
+    {fish::eye, fish::eye},
+    {fizzgig::eye, fizzgig::eye},
+    {flame::eye, flame::eye},
+    {hazel::eye, hazel::eye},
+    {hypnoRed::eye, hypnoRed::eye},
+    {leopard::left, leopard::right},
+    {newt::eye, newt::eye},
+    {skull::eye, skull::eye},
+    {snake::eye, snake::eye},
+    {spikes::eye, spikes::eye},
+    {toonstripe::eye, toonstripe::eye},
+});
 
 // DISPLAY HARDWARE SETTINGS (screen type & connections) -------------------
 
@@ -67,29 +67,60 @@ std::array<std::array<EyeDefinition, 2>, 13> eyeDefinitions{{
 // With two displays, one should be configured to mirror on the X axis. This simplifies
 // eyelid handling -- no need for distinct L-to-R or R-to-L inner loops. Just the X
 // coordinate of the iris is then reversed when drawing this eye, so they move the same.
-GC9A01A_Config eyeInfo[] = {
+inline GC9A01A_Config eyeInfo[] = {
     // CS DC MOSI SCK RST ROT MIRROR USE_FB ASYNC
     {0,  5, 10, 11,  6, 1, false,  true, true}, // Left display
     {1, 23, 10, 11, 24, 3, true,   true, true}, // Right display
 };
-
-constexpr uint32_t EYE_DURATION_MS{10'000};
 
 /// The speed of the SPI bus. For maximum performance, set this as high as you can get away with.
 /// It will depend on the displays themselves, wire lengths, shielding/interference etc. My
 /// setup works up to about 90,000,000. At 100,000,000 I start seeing corruption on the displays.
 constexpr uint32_t SPI_SPEED{90'000'000};
 
-// Set to -1 to disable the blink button and/or joystick
-constexpr int8_t BLINK_PIN{-1};
-constexpr int8_t JOYSTICK_X_PIN{-1};
-constexpr int8_t JOYSTICK_Y_PIN{-1};
-constexpr int8_t LIGHT_PIN{-1};
-constexpr bool USE_PERSON_SENSOR{false};
 
-EyeController<2, GC9A01A_Display> *eyes{};
+// BEHAVIOUR ------------------------------------------------------------------
+// Settings marked [ENV_VAR] can be overridden at run time by setting that environment variable.
 
-void initEyes(bool autoMove, bool autoBlink, bool autoPupils) {
+/// How long each eye style is shown when cycling through styles. [EYES_STYLE_DURATION_MS]
+constexpr uint32_t STYLE_DURATION_MS{10'000};
+
+/// Average automatic blinks per minute at startup, and for the "blink_rate" command when no
+/// rate is given.
+constexpr float DEFAULT_BLINK_RATE{10.0f};
+
+// SENSORS AND COMMANDS (over ZeroMQ) ------------------------------------------
+// Each endpoint is either a ZeroMQ address, e.g. "tcp://clio:5561", or an endpoint name looked up
+// with the Master service at $MASTER (see master/README.md). An empty string disables it.
+
+/// Where to fetch face and light level data from (see docs/sensor-protocol.md).
+/// [EYES_PERSON_ENDPOINT, EYES_LIGHT_ENDPOINT]
+constexpr const char *PERSON_ENDPOINT{""};
+constexpr const char *LIGHT_ENDPOINT{""};
+
+/// Where to listen for commands such as "blink left" (see docs/command-protocol.md).
+/// "tcp://*:5562" listens on port 5562 on all network interfaces. [EYES_COMMAND_ENDPOINT]
+constexpr const char *COMMAND_ENDPOINT{"tcp://*:5562"};
+
+/// The range of light levels (0 to 1) the provider actually reports, from dark to bright.
+/// This range is stretched to cover the full range of pupil sizes. [EYES_LIGHT_MIN, EYES_LIGHT_MAX]
+constexpr float LIGHT_MIN{0.2f};
+constexpr float LIGHT_MAX{0.5f};
+
+/// Exponent applied to the stretched light level. Above 1 makes the pupils less sensitive in dim
+/// light and more sensitive in bright light; below 1 does the opposite. [EYES_LIGHT_CURVE]
+constexpr float LIGHT_CURVE{1.0f};
+
+/// Faces reported with a confidence (0 to 1) below this are ignored.
+constexpr float MIN_FACE_CONFIDENCE{0.25f};
+
+/// true if the camera looks outwards the same way as the eyes, so a person on the left of
+/// the camera image is on the eyes' right. [EYES_MIRROR_PERSON_X, 0 or 1]
+constexpr bool MIRROR_PERSON_X{false};
+
+inline EyeController<2, GC9A01A_Display> *eyes{};
+
+inline void initEyes(bool autoMove, bool autoBlink, bool autoPupils) {
   // Create the displays and eye controller
   auto &defs = eyeDefinitions.at(0);
   auto l = new GC9A01A_Display(eyeInfo[0], SPI_SPEED);

@@ -23,6 +23,12 @@ private:
   /// Whether the eyes are blinking autonomously
   bool autoBlink{};
 
+  /// The average time between automatic blinks
+  uint32_t meanBlinkIntervalMs{2225};
+
+  /// How long the eyelids take to move to a new openness by default (see setOpenness())
+  static constexpr uint32_t LID_MOVE_MS{150};
+
   /// Whether the pupils are resizing autonomously
   bool autoPupils{};
 
@@ -192,18 +198,36 @@ private:
     const uint32_t t = millis();
     if (t - state.timeOfLastBlinkMs >= state.timeToNextBlinkMs) {
       state.timeOfLastBlinkMs = t;
-      const uint32_t blinkDuration = doBlink();
-      state.timeToNextBlinkMs = blinkDuration * 3 + random(4000);
+      const uint32_t minGapMs = doBlink() * 3;
+      const uint32_t spreadMs = meanBlinkIntervalMs > minGapMs ? 2 * (meanBlinkIntervalMs - minGapMs) : 1;
+      state.timeToNextBlinkMs = minGapMs + random(spreadMs);
     }
+  }
+
+  /// \return how far open the eye's lids are held (apart from blinks) at time t: 0 = closed, 1 = fully open.
+  static float openness(const EyeBlink &blink, uint32_t t) {
+    const uint32_t dt = t - blink.openStartMs;
+    if (dt >= blink.openDurationMs) {
+      return blink.openTo;
+    }
+    const float fraction = static_cast<float>(dt) / static_cast<float>(blink.openDurationMs);
+    return blink.openFrom + (blink.openTo - blink.openFrom) * fraction;
   }
 
   /// Updates a blink state for the current point in time.
   /// \param blink the blink state to update.
-  /// \return the amount of 'blink' that was calculated, where 0 means not blinking
-  /// and 1 means the eye is fully closed.
+  /// \return how closed the eyelids are, combining any blink with the openness set by
+  /// setOpenness(), where 0 means fully open and 1 means fully closed.
   float updateBlinkState(Eye<Disp> &eye) {
     auto &blink = eye.blink;
     const uint32_t t = millis();
+    if (blink.reopenPending && static_cast<int32_t>(t - blink.reopenAtMs) >= 0) {
+      blink.reopenPending = false;
+      blink.openFrom = openness(blink, t);
+      blink.openTo = 1.0f;
+      blink.openStartMs = t;
+      blink.openDurationMs = LID_MOVE_MS;
+    }
     float blinkFactor{};
     if (blink.state != BlinkState::NotBlinking) {
       // The eye is currently blinking. We scale the upper/lower thresholds relative
@@ -232,7 +256,8 @@ private:
         }
       }
     }
-    return blinkFactor;
+    // A blink closes the lids from wherever they are held and returns them there
+    return 1.0f - openness(blink, t) * (1.0f - blinkFactor);
   }
 
   float mapToScreen(int32_t value, int32_t mapRadius, int32_t eyeRadius) const {
@@ -593,6 +618,36 @@ public:
   void wink(size_t index) {
     if (index < eyes.size()) {
       wink(eyes[index], random(50, 100));
+    }
+  }
+
+  /// Sets how often the eyes blink automatically.
+  /// \param perMinute the average number of blinks per minute. 0 or less turns automatic blinking off.
+  void setBlinkRate(float perMinute) {
+    autoBlink = perMinute > 0;
+    if (autoBlink) {
+      meanBlinkIntervalMs = static_cast<uint32_t>(60'000.0f / perMinute);
+      // Start the new timing from now
+      state.timeOfLastBlinkMs = millis();
+      state.timeToNextBlinkMs = random(meanBlinkIntervalMs * 2);
+    }
+  }
+
+  /// Smoothly opens or closes the eyelids of the eye at the given index to the given amount, where
+  /// they stay (apart from blinks) until changed. If the index is out of range, nothing will happen.
+  /// \param level how far open, from 0 (fully closed) to 1 (fully open, the normal state).
+  /// \param holdMs how long to stay there before returning to fully open. 0 means until changed.
+  /// \param durationMs how long the eyelids take to get there.
+  void setOpenness(size_t index, float level, uint32_t holdMs = 0, uint32_t durationMs = LID_MOVE_MS) {
+    if (index < eyes.size()) {
+      EyeBlink &blink = eyes[index].blink;
+      const uint32_t t = millis();
+      blink.openFrom = openness(blink, t);
+      blink.openTo = std::max(0.0f, std::min(1.0f, level));
+      blink.openStartMs = t;
+      blink.openDurationMs = durationMs;
+      blink.reopenPending = holdMs > 0;
+      blink.reopenAtMs = t + durationMs + holdMs;
     }
   }
 
