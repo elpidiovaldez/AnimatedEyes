@@ -1,4 +1,10 @@
-# TeensyEyes
+# AnimatedEyes
+
+### Credits
+
+AnimatedEyes is based on [TeensyEyes](https://github.com/chrismiller/TeensyEyes) by Chris Miller, used under
+the MIT License. Many thanks to Chris for the original work. The introduction below, including the 3D printed
+enclosures, describes his project.
 
 ### Introduction
 
