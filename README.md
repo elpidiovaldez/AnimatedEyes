@@ -25,12 +25,34 @@ by Gavin Lyons, used under the MIT License. Many thanks to Gavin for his display
 
 ### Building
 
-You need a Raspberry Pi with SPI enabled (`sudo raspi-config`, Interface Options, SPI), a C++23
-compiler (GCC 14 or later), CMake, and these libraries:
+You need a Raspberry Pi, a C++23 compiler (GCC 12 or later), CMake, and these libraries:
 
 - [lg](https://github.com/joan2937/lg) (lgpio): download, then `make && sudo make install`
 - [Display_Lib_RPI](https://github.com/gavinlyonsrepo/Display_Lib_RPI) 2.7.0: download, then `make && sudo make install`
 - ZeroMQ: `sudo apt install libzmq3-dev cppzmq-dev`
+
+**SPI settings.** Enable SPI and enlarge the SPI transfer buffer (the default 4 KB is too small
+for full-screen updates), then reboot:
+- `/boot/firmware/config.txt`: add `dtparam=spi=on` (or use `sudo raspi-config`, Interface Options, SPI)
+- `/boot/firmware/cmdline.txt`: add ` spidev.bufsiz=131072` to the end of the line (it must stay a single line)
+
+Afterwards `ls /dev/spidev*` should list `spidev0.0` and `spidev0.1`.
+
+**Older compilers (Raspberry Pi OS Bookworm, GCC 12).** Display_Lib_RPI 2.7.0 uses `std::format`,
+which needs GCC 13 or later, so its build fails with `fatal error: format: No such file or directory`.
+It is used in only one function, so before running `make`, delete `#include <format>` from
+`include/utility_data_RDL.hpp` and change `rdlib_time::UTC_string()` in `src/utility_data_RDL.cpp` to:
+```cpp
+std::string UTC_string()
+{
+	std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::tm tm{};
+	gmtime_r(&t, &tm);
+	char buf[32];
+	std::strftime(buf, sizeof(buf), "%F %T UTC", &tm);
+	return buf;
+}
+```
 
 Then build, and optionally run the tests:
 ```shell
