@@ -86,7 +86,9 @@ can be changed at run time with environment variables, without rebuilding:
 
 The eyes can follow people's faces and react to the ambient light level, using data
 fetched over ZeroMQ from a sensor provider on the same or another machine. See
-[docs/sensor-protocol.md](docs/sensor-protocol.md) for how to connect or write a provider.
+[docs/sensor-protocol.md](docs/sensor-protocol.md) for how to connect or write a provider, and
+[docs/setup-using-master.md](docs/setup-using-master.md) for a worked example of connecting
+everything by name with the Master.
 
 Other programs can send the eyes commands over ZeroMQ, to blink, wink, open or close them,
 change how often they blink, or change eye style. See [docs/command-protocol.md](docs/command-protocol.md),

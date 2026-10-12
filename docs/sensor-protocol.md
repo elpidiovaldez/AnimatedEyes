@@ -29,11 +29,22 @@ Each value is either:
 - an endpoint name, such as `eyes.sensors`, which is looked up with the
   [Master](../master/README.md) name service at the address in `$MASTER`.
 
-An empty value disables that sensor. For example:
+An empty value disables that sensor. For example, to get faces straight from a
+provider listening on port 5561 of the machine `camerapi`:
 
 ```shell
-EYES_PERSON_ENDPOINT=tcp://camerapi:5561 EYES_LIGHT_ENDPOINT= ./AnimatedEyes
+EYES_PERSON_ENDPOINT=tcp://camerapi:5561 ./AnimatedEyes
 ```
+
+or to look the provider up as `eyes.sensors` with a Master running on `clio`:
+
+```shell
+export MASTER=tcp://clio:6000
+export EYES_PERSON_ENDPOINT=eyes.sensors
+./AnimatedEyes
+```
+
+See [setup-using-master.md](setup-using-master.md) for a complete example.
 
 ## Messages
 

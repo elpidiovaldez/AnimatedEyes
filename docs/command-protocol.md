@@ -20,7 +20,8 @@ value is either:
 - an endpoint name, such as `eyes.commands`, which is looked up with the
   [Master](../master/README.md) name service at the address in `$MASTER`.
 
-An empty value disables commands.
+An empty value disables commands. See [setup-using-master.md](setup-using-master.md)
+for a complete example using the Master, including sending commands from Python.
 
 [`tools/send_command.py`](../tools/send_command.py) sends commands from the
 command line. It finds the eyes by looking up `eyes.commands` with the Master (or
